@@ -12,10 +12,24 @@ print(data.isnull().sum())
 
 data = data[["text", "label"]]
 
+data = data.sample(frac=1, random_state=42).reset_index(drop=True)
+
+split = int(len(data) * 0.8)
+
+train_data = data[:split]
+val_data = data[split:]
+
+train_texts = train_data["text"]
+train_labels = train_data["label"]
+
+val_texts = val_data["text"]
+val_labels = val_data["label"]
+
+print("Training emails: ", len(train_data))
+print("Validation emails: ", len(val_data))
+
 print(data.head())
 
-texts = data["text"]
-labels = data["label"]
 
 vectorizer = TextVectorization(
     max_tokens=10000,
@@ -23,7 +37,7 @@ vectorizer = TextVectorization(
     output_sequence_length=100
 )
 
-vectorizer.adapt(texts)
+vectorizer.adapt(train_texts)
 
 sample_text = "Your account has been locked"
 
