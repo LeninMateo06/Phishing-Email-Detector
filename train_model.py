@@ -64,7 +64,14 @@ model = Sequential([
 model.compile(
     optimizer ="adam",
     loss="binary_crossentropy",
-    metrics = ["accuracy"]
+    metrics = [
+        "accuracy",
+        tf.keras.metrics.Precision(name="precision"),
+        tf.keras.metrics.Recall(name="recall")
+
+
+
+    ]
 )
 
 #Trainthe neural red
@@ -96,8 +103,5 @@ for email, prediction in zip(test_emails, predictions):
     else:
         print("Result: Legitimate")
 
-sample_text = "Your account has been locked"
 
-vectorized_text = vectorizer([sample_text])
-
-print(vectorized_text)
+model.save_weights("phishing_model.weights.h5")
