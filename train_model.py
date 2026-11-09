@@ -3,9 +3,27 @@ import tensorflow as tf
 
 from tensorflow.keras.layers import TextVectorization
 from tensorflow.keras import Sequential
-from tensorflow.keras.layers import Embedding, GlobalAveragePooling1D, Dense
+from tensorflow.keras.layers import Embedding, GlobalAveragePooling1D, Dense, Dropout
 
 data = pd.read_csv("kaggle/phishing_legit_dataset_KD_10000.csv")
+
+def remove_keywords(text):
+    lines = text.split("\n")
+    clean_lines = []
+
+    for line in lines:
+        if line.startswith("Keywords:"):
+            continue
+
+        if line.startswith("Subject:"):
+            line = line.replace("Subject:", "", 1)
+
+        clean_lines.append(line)
+
+    return "\n".join(clean_lines)
+
+data["text"] = data["text"].apply(remove_keywords)
+
 
 print(data.head())
 print(data["label"].value_counts())
@@ -40,9 +58,6 @@ print("Validation emails: ", len(val_data))
 
 
 
-print(data.head())
-
-
 vectorizer = TextVectorization(
     max_tokens=10000,
     output_mode="int",
@@ -51,16 +66,23 @@ vectorizer = TextVectorization(
 
 vectorizer.adapt(train_texts)
 
+vocabulary = vectorizer.get_vocabulary()
+
+with open("vocabulary.txt", "w", encoding="utf-8") as file:
+    for word in vocabulary:
+        file.write(word + "\n")
+
 model = Sequential([
     vectorizer,
     Embedding(input_dim=10000, output_dim=16),
     GlobalAveragePooling1D(),
     Dense(16, activation="relu"),
+    Dropout(0.3),
     Dense(1, activation="sigmoid")
 
 ])
 
-#Clasification
+#Compile the classification model
 model.compile(
     optimizer ="adam",
     loss="binary_crossentropy",
@@ -74,13 +96,13 @@ model.compile(
     ]
 )
 
-#Trainthe neural red
+#Train the neural network
 
 history = model.fit(
     train_texts,
     train_labels,
     validation_data=(val_texts, val_labels),
-    epochs=5
+    epochs=3
 
 )
 
