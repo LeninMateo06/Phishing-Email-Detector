@@ -1,34 +1,46 @@
 
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+
 import tensorflow as tf
+
+tf.get_logger().setLevel("ERROR")
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import TextVectorization, Embedding, GlobalAveragePooling1D, Dense, Dropout
 import tkinter as tk
 
 
+# Load the vocabulary
 with open("vocabulary.txt", "r", encoding="utf-8") as file:
     vocabulary = [line.strip() for line in file]
 
-vectorizer= TextVectorization(
+# Create the text vectorizer from vocabulary
+vectorizer = TextVectorization(
       max_tokens=10000,
-      output_mode='int',
+      output_mode="int",
       output_sequence_length=100,
-  )
+)
 
 vectorizer.set_vocabulary(vocabulary[2:])
+
+# Use the neural network architecture use during training model
 model = Sequential([
       vectorizer,
       Embedding(input_dim=10000, output_dim=16),
       GlobalAveragePooling1D(),
-      Dense(16, activation='relu'),
+      Dense(16, activation="relu"),
       Dropout(0.3),
-      Dense(1, activation='sigmoid'),
+      Dense(1, activation="sigmoid"),
   ])
 
+# Build the model and load the trained model
 dummy_email = tf.convert_to_tensor(["test email"], dtype=tf.string)
 model(dummy_email)
 
 model.load_weights("phishing_model.weights.h5")
 
+# Clean as we did in training
 def clean_email(text):
     lines = text.split("\n")
     clean_lines = []
@@ -44,6 +56,7 @@ def clean_email(text):
 
     return "\n".join(clean_lines)
 
+#Get the email put in the interface
 def check_email():
     email = email_box.get("1.0", tk.END).strip()
 
@@ -59,6 +72,8 @@ def check_email():
 
     score = prediction[0][0]
 
+    # Classification threshold
+    # Score >= 0.5 = Phishing, score < 0.5 = Legitimate
     if score >= 0.5:
         result_label.config(text="jajaja, hackers think we are dumb, Phishing Detected!!! ")
     else:
@@ -66,6 +81,7 @@ def check_email():
 
     score_label.config(text=f"Prediction score: {score:.4f}")
 
+#User interface for DEMO
 window = tk.Tk()
 window.title("Phishing Email Detector")
 window.geometry("600x500")
